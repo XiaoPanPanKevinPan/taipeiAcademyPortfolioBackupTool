@@ -3,9 +3,27 @@
 
 本 UserScript 幫助使用者，從臺北市的學生學習歷程檔案系統，備份曾經上傳的檔案與檔案簡述等等資料。
 
+# 如何安裝與使用
+
+1. 本程式為一 UserScript，請先安裝 ViolentMonkey、TemperMonkey、GreaseMonkey 等等瀏覽器擴充功能。
+	- 建議使用 ViolentMonkey。您可在 [ViolentMonkey 官方網站]( https://violentmonkey.github.io/get-it/ ) 
+	  找到與您的瀏覽器兼容的版本。
+2. 接下來，請點擊 [此連結（GitHub）]( https://github.com/XiaoPanPanKevinPan/taipeiAcademyPortfolioBackupTool/raw/main/main.user.js ) 或者 [備用連結（OpenUserJS）]( https://openuserjs.org/install/kevin_pan_940506/Taipei_Academy_Protfolio_Backup_Tool.user.js ) 以進行安裝。
+	1. 此時，您如果在新分頁或新視窗中看見「安裝」、「確認安裝」、「Install」、「Confrim Install」
+	   或類似文字的按鈕，請點擊下去。
+	2. 此時您如果只看見一串程式碼（最前方以 `// ==UserScript==` 開頭），請
+		1. 將整串程式碼（總計五百多行）完整複製，
+		2. 並且將你剛才安裝的擴充功能打開，找到「新增腳本」、「建立新腳本」、「新增使用者指令稿」、「Create a new userscript」、「New user script」、「Create a new script」或類似的按鈕，點擊下去
+		3. 在開啟的程式碼編輯器中，把所有程式碼刪除，並把剛才複製的程式碼貼上
+		4. 存檔並離開
+3. 最後，請進入 [臺北市學生學習歷程檔案系統]( https://e-portfolio.cooc.tp.edu.tw/ ) 並登入。您應該可以看到如下方「備份界面未開啟」截圖的畫面。請點擊「開啟備份界面：……」，並點擊「開始備份」按鈕。
+4. 待到「下載」按鈕可以點擊後，請下載並解壓縮檔案，再照著 `README使用前請讀我.txt` 檔案操作。
+	
+
 # 螢幕截圖
 
 備份界面未開啟：
+
 <img 
 	src="./screenshots/panelClosed.png"
 	title="備份界面未開啟"
@@ -14,6 +32,7 @@
 />
 
 備份界面已開啟：
+
 <img
 	src="./screenshots/panelOpen.png"
 	title="備份界面已開啟"
@@ -21,15 +40,17 @@
 	style="max-width: min(50vw, 90%); max-height: 50vh" 
 />
 
-備份檔案結構：
+備份完成後，備份檔案（zip）結構：
+
 <img
 	src="./screenshots/zipFileStructure.png"
-	title="備份檔案結構"
+	title="備份完成後，備份檔案（zip）結構"
 	alt="一個 zip 檢視器的視窗。視窗的標題是「academyPortfolioBackup_2023-07-12T05-16-56-990Z.zip ...」，視窗內顯示有兩個資料夾——分別叫做「learningOutcomes」與「diversePerformances」——跟三個檔案————分別叫做「meta.json」、「index.html」與「README使用前請讀我.txt」。"
 	style="max-width: min(50vw, 90%); max-height: 50vh" 
 />
 
 學習歷程檢視器（index.html）：
+
 <img
 	src="./screenshots/portfolioViewer.png"
 	title="學習歷程檢視器（index.html）"
@@ -38,6 +59,7 @@
 />
 
 學習歷程檢視器的檔案檢視器（index.html）：
+
 <img
 	src="./screenshots/fileViewer.png"
 	title="學習歷程檢視器的檔案檢視器（index.html）"
