@@ -4,6 +4,12 @@
 本 UserScript 幫助使用者，從臺北市的學生學習歷程檔案系統，備份曾經上傳的檔案與檔案簡述等等資料。
 
 # 如何安裝與使用
+<details>
+	<summary>
+		簡而言之：先裝 <a href="https://violentmonkey.github.io/get-it/">ViolentMonkey</a>，
+		然後開 <a href="https://github.com/XiaoPanPanKevinPan/taipeiAcademyPortfolioBackupTool/raw/main/main.user.js">這個連結</a>、點安裝，
+		接下來登入 <a href="https://e-portfolio.cooc.tp.edu.tw/">學習歷程檔案系統</a>，就好了。
+	</summary>
 
 1. 本程式為一 UserScript，請先安裝 ViolentMonkey、TemperMonkey、GreaseMonkey 等等瀏覽器擴充功能。
 	- 建議使用 ViolentMonkey。您可在 [ViolentMonkey 官方網站]( https://violentmonkey.github.io/get-it/ ) 
@@ -18,7 +24,7 @@
 		4. 存檔並離開
 3. 最後，請進入 [臺北市學生學習歷程檔案系統]( https://e-portfolio.cooc.tp.edu.tw/ ) 並登入。您應該可以看到如下方「備份界面未開啟」截圖的畫面。請點擊「開啟備份界面：……」，並點擊「開始備份」按鈕。
 4. 待到「下載」按鈕可以點擊後，請下載並解壓縮檔案，再照著 `README使用前請讀我.txt` 檔案操作。
-	
+</details>
 
 # 螢幕截圖
 
