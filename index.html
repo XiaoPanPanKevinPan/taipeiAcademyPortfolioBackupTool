@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html><head>
+	<title>學習歷程檔案備份</title>
+	<script>
+		const meta = REPLACE_THIS_WITH_META_JSON;
+	</script>
+	<script>
+const qry = (...x) => document.querySelector(...x), qrys = (...x) => [...document.querySelectorAll(...x)];
+document.addEventListener("DOMContentLoaded", () => {
+	const main = qry("main");
+	main.innerHTML = `
+		<button>全部展開</button><button>全部收合</button>
+	`;
+	{
+		const [openAll, closeAll] = main.children;
+		openAll.addEventListener("click", e => qrys("details").forEach(d => d.open = true));
+		closeAll.addEventListener("click", e => qrys("details").forEach(d => d.open = false));
+	}
+
+	// an handy function that'll be used twice later
+	const fieldToHTML = ([name, valueSource, {className, replaceValueElement} = {}], o) => {
+		let value = "";
+		if(typeof valueSource == "function") {
+			value = valueSource(o);
+		}else{
+			value = `${o[valueSource]}`;
+		}
+		if(value === false) return "";
+		return `
+			<div class="${className}">
+				<div>${name}</div>
+				${!replaceValueElement ? `<div>${value}</div>`: value}
+			</div>
+		`;
+	};
+
+	// push learning outcomes into the webpage
+	const outcomeFields = [
+		// [name, valueSource, replaceValueElement]
+		// valueSource can either be a string, which means the field name,
+		// or be a function, which takes an argument representing the outcome
+		// and returns the result html code or `false` for omitting the field.
+
+		["學年度-學期", o => `${o.syear}-${o.seme}`],
+		["科目", o =>
+			`<details>
+				<summary>${o.subjCname}<i>${
+					o.courseType == "2"	? "（重修）"
+					: o.courseType == "3" ? "（補修）"
+					: ""
+				}${ o.revise == "Y"	? "（補件）" : "" }</i></summary>
+				科目代碼／subjNo：${o.subjNo} <br />
+				課程代碼／courseId：${o.courseId}
+			</details>`
+		],
+		["科目學分／時數", "credits"],
+		["科目成績", "score"],
+		["授課教師", o => o.emps.replaceAll(',', '、')],
+		["上傳時間", "updTm"],
+		["送出時間", "submitTm"],
+		["認證狀態", o => 
+			`<details>
+				<summary style="color: ${
+					o.verifyM == "1" ? "green"
+					: o.verifyM == "2" ? "red"
+					: "rgb(128, 64, 0)"
+				}">${o.verifyMText}</summary>
+				認證時間：${o.verifyTm}<br />
+				認證教師：${o.vemps.replaceAll(',', '、')}<br />
+				評語／原因：<p>${o.verifyTxt || `<i>無</i>`}</p>
+			</details>`
+		],
+		["勾選轉存中央資料庫", o => `<details>
+			<summary style="color: ${o.uploadYn == "Y" ? "#00F": "#F00"}; ">${o.uploadText}</summary>
+			上次修改勾選時間：${o.uploadTm || "無"}
+		</details>`],
+		["成果簡述", o => `<p>${o.brief}</p>`, {className: "longField"}],
+		["文件檔案", o => {
+			if(!o.dn) return "無";
+			return `
+				<details>
+					<summary>
+						檔案原名：<code>${o.dn}</code> <button 
+							class="preview"
+							data-filename="${o.dn}"
+							data-path="${o.docZipPath}"
+						>嘗試預覽</button><br />
+						在備份檔中位置：<code>${o.docZipPath}</code>
+					</summary>
+					MD5 完整性校驗碼：<code>${o.docMd5}</code><br />
+					系統中 uuid：<code>${o.du}</code><br />
+				</details>
+			` + (!o.dn_old ? "" : `
+				<br />
+				舊檔原名：<code>${o.dn_old}</code> <button
+					class="preview"
+					data-filename="${o.dn_old}"
+					data-path="${o.docOldZipPath}"
+				>嘗試預覽</button><br />
+				在備份檔中位置：<code>${o.docOldZipPath}</code>
+			`)
+		}, {className: "longField"}],
+		["影音檔案", o => {
+			if(!o.mn) return "無";
+			return `
+				<details>
+					<summary>
+						檔案原名：<code>${o.mn}</code> <button 
+							class="preview"
+							data-filename="${o.mn}"
+							data-path="${o.mediaZipPath}"
+						>嘗試預覽</button><br />
+						在備份檔中位置：<code>${o.mediaZipPath}</code>
+					</summary>
+					MD5 完整性校驗碼：<code>${o.mediaMd5}</code><br />
+					系統中 uuid：<code>${o.mu}</code><br />
+				</details>
+			` + (!o.mn_old ? "" : `
+				<br />
+				舊檔原名：<code>${o.mn_old}</code> <button
+					class="preview"
+					data-filename="${o.mn_old}"
+					data-path="${o.mediaOldZipPath}"
+				>嘗試預覽</button><br />
+				在備份檔中位置：<code>${o.mediaOldZipPath}</code>
+			`)
+		}, {className: "longField"}],
+		["其他訊息", o => {
+			let tags = "";
+			tags += o.abil ? `核心素養：${o.abil}` : "";
+			tags += tags ? "<br />" : "";
+			tags += o.mult ? `多元智能：${o.mult}` : "";
+			tags += tags ? "<br />" : "";
+			tags += o.group ? `學群探索：${o.group}` : "";
+			return `<details><summary>詳細資料</summary>
+				上傳代碼：${o.updId}<br />
+				insertSyse：${o.insertSyse}<br />
+				insTm：${o.insTm}<br />
+				insId：${o.insId}
+				${tags ? "<br /><hr /><br />" + tags : ""}
+			</details>`
+		}, {className: "longField"}]
+	];
+
+	meta.learningOutcomes.reverse().forEach(o => { // o for outcome
+		let outcomeHtml = "";
+		outcomeFields.forEach(field => outcomeHtml += fieldToHTML(field, o));
+		main.insertAdjacentHTML(`beforeend`, `
+			<section>
+				<h2>學習成果 <code>#${o.id}</code></h2>
+				<div class="outcome fields">${outcomeHtml}</div>
+			</section>
+		`);
+	});
+
+	// push diverse performances into webpage
+	const performanceFields = {
+		"1": [["單位名稱", "unit"], ["開始日期", "beginDt"], ["結束日期", "endDt"], ["擔任職務", "title"], ["幹部等級", "kind"]],
+		"2": [["競賽名稱", "competitionName"], ["競賽等級", "level"], ["獎項", "award"], ["公布日期", "announcementDt"], ["參與類型", "groupM"]],
+		"3": [["證照字號", "certNo"], ["證照備註", "kind"], ["分數", "score"], ["分項結果", "result"], ["取得證照日期", "obtainDt"]],
+		"4": [["服務名稱", "servName"], ["服務單位", "servUnit"], ["開始日期", "beginDt"], ["結束日期", "endDt"], ["時數", "hours"]], 
+		"5": [["類別", "kind"], ["開設名稱", "openName"], ["開設單位", "unit"], ["每週節數", "secs"], ["開設週數", "weeks"]],
+		"6": [["名稱", "worksName"], ["日期", "worksDt"]],
+		"7": [["名稱", "actName"], ["主辦單位", "unit"], ["開始日期", "beginDt"], ["結束日期", "endDt"], ["時數", "hours"]],
+		"8": [["類別", "kind"], ["單位", "unit"], ["職稱", "title"], ["開始日期", "beginDt"], ["結束日期", "endDt"]],
+		"9": [["時間類別", "timeKind"], ["內容名稱", "openName"], ["時數", "hours"]],
+		"10": [["開設單位", "unit"], ["課程名稱", "openName"], ["開始日期", "beginDt"], ["結束日期", "endDt"], ["學分數", "credits"], ["總時數", "hours"]]
+	};
+	Object.keys(performanceFields).forEach(key => {
+		const seme = ["學期-學年度", p => `${p.syear}-${p.seme}`];
+		const check = ["勾選轉存中央資料庫", p => `<details>
+			<summary>${p.uploadText.replace(/<br ?\/?>/g, "")}</summary>
+			上次修改勾選時間：${p.uploadTm}
+		</details>`];
+		const brief = ["內容簡述", p => `<p>${p.brief}</p>`, {className: "longField"}];
+		const file = [
+			key == "5" /* 彈性學習 */ ? "作品成果" : "證明文件",
+			p => !p.certiFilename ? "無" : `<details>
+				<summary>
+					原檔名稱：<code>${p.certiFilename}</code> <button
+						class="preview"
+						data-filename="${p.certiFilename}"
+						data-path="${p.certiZipPath}"
+					>嘗試預覽</button><br />
+					在備份檔中位置：<code>${p.certiZipPath}</code>
+				</summary>
+				MD5 完整性校驗碼：<code>${p.certiMd5}</code><br />
+				系統中 uuid：<code>${p.certiFile}</code>
+			</details>`,
+			{className: "longField"}
+		];
+		const media = [
+			"媒體文件",
+			p => !p.mediaFilename ? false : `<details>
+				<summary>
+					原檔名稱：<code>${p.mediaFilename}</code> <button
+						class="preview"
+						data-filename="${p.mediaFilename}"
+						data-path="${p.mediaZipPath}"
+					>嘗試預覽</button><br />
+					在備份檔中位置：<code>${p.mediaZipPath}</code>
+				</summary>
+				MD5 完整性校驗碼：<code>${p.mediaMd5}</code><br />
+				系統中 uuid：<code>${p.mediaFile}</code>
+			</details>`, 
+			{className: "longField"}
+		];
+		performanceFields[key].splice(0, 0, seme);
+		performanceFields[key].push(check, brief, file, media);
+	});
+
+	const performanceCategories = {
+		"1": "幹部經歷", "2": "競賽參與", "3": "檢定證照", "4": "志工服務", "5": "彈性學習",
+		"6": "作品成果", "7": "其他活動", "8": "職場學習", "9": "團體活動", "10": "先修課程"
+	};
+
+	Object.entries(performanceCategories).forEach(([num, title]) => {
+		let performanceCategoryHtml = "";
+		meta.diversePerformances[num].dataRows.forEach(p => {
+			let performanceHtml = ""
+			performanceFields[num].forEach(field => performanceHtml += fieldToHTML(field, p));
+			performanceCategoryHtml += `
+				<section>
+					<h3>多元表現 <code>#${p.id}</code></h3>
+					<div class="performances fields">${performanceHtml}</div>
+				</section>
+			`;
+		});
+		main.insertAdjacentHTML("beforeend", `<section>
+			<h2>${title}</h2>
+			<div>
+				${performanceCategoryHtml || `無${title}記錄`}
+			</div>
+		</section>`);
+	});
+
+	const [preview, closePreview] = (() => {
+		main.insertAdjacentHTML("beforeend", `<dialog id="preview"></dialog>`);
+		const dialog = qry("dialog#preview");
+
+		dialog.addEventListener("close", e => dialog.innerHTML = "");
+
+		const close = () => dialog.close();
+
+		const start = (filename, path) => {
+			dialog.showModal();
+			dialog.innerHTML = `
+				<div>
+					<div>檔案名稱：<code>${filename}</code></div>
+					<button>關閉檢視（ESC）</button>
+				</div>
+				<object data="./${path}"><div>
+					很抱歉，您的瀏覽器並不支援這個檔案的檢視。
+					請手動開啟位於備份檔中，<code>${path}</code>的檔案
+				</div></object>
+			`;
+			[{children: [filenameDiv, closeButton]}, previewObject] = dialog.children;
+			closeButton.addEventListener("click", close);
+			previewObject.focus();
+		};
+		return [start, close];
+	})();
+
+	qrys("button.preview").forEach(b => b.addEventListener("click", e => {
+		preview(b.dataset["filename"], b.dataset["path"]);
+	}));
+});
+	</script>
+	<style>
+* {
+	box-sizing: border-box;
+}
+
+html {
+	font-size: 16px;
+	font-family: "Noto Sans TC", sans-serif;
+	line-height: 1.5;
+}
+
+code {
+	font-size: 0.8em;
+	padding: 0 0.1em;
+	border-bottom: solid black 0.0625px;
+}
+
+.fields {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.5em;
+}
+.fields > * {
+	display: contents;
+	gap: 0.5em;
+}
+
+@media (min-width: 50rem) {
+	.fields {
+		grid-template-columns: auto 1fr auto 1fr;
+	}
+
+	.longField > :first-child {
+		grid-column: 1;
+	}
+
+	.longField > :nth-child(2) {
+		grid-column: 2 / span 3;
+	}
+}
+
+.fields > * > * {
+	align-self: center;
+}
+
+.fields > * > :nth-child(2) {
+	margin-right: 0.5em;
+}
+
+.fields > * > :first-child {
+	text-align: right;
+}
+
+.fields p {
+	background-color: lightgrey;
+	padding: 0.5em;
+	margin: 0;
+	border-radius: 0.5em;
+}
+
+dialog::backdrop {
+	backdrop-filter: blur(0.0625rem);
+	background-color: rgba(0 0 0 / 0.5);
+}
+
+dialog#preview[open] {
+	width: calc(100vw - 2rem);
+	height: calc(100vh - 2rem);
+
+	display: flex;
+	flex-flow: column nowrap;
+	padding: 0;
+}
+
+dialog#preview > div:first-child {
+	flex: 0 0;
+	display: flex;
+}
+
+dialog#preview > div:first-child > div:first-child {
+	flex: 1;
+	padding: 0.5em;
+}
+
+dialog#preview > div:first-child > button:nth-child(2) {
+	flex: 0 0;
+	border-radius: 0;
+	white-space: nowrap;
+}
+
+dialog#preview > object:nth-child(2) {
+	background-color: black;
+	flex: 1;
+}
+	</style>
+</head><body>
+	<section aria-label="本檔案介紹">
+		<h1>學習歷程檔案備份</h1>
+		<p>
+		本檔案是您的學習歷程檔案備份，可供離線檢視。<br />
+		<br />
+		您可以點擊每個檔案的「嘗試預覽」按鈕，試圖在瀏覽器中檢視該檔案。若是瀏覽器不支援，您也不妨直接在資料夾中找到該檔案，並且開啟。
+			<noscript>
+				抱歉，您的瀏覽器並不支援 Javascript。不過別擔心，資料已經完整留在本檔案中了。您可以透過其他瀏覽器離線檢視。
+			</noscript>
+		</p>
+	</section>
+	<main>
+		請稍待，本檔案正由您的瀏覽器渲染成方便檢視的表格。
+	</main>
+</body></html>
